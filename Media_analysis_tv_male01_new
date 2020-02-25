@@ -1,0 +1,43 @@
+%matplotlib inline
+
+import os.path as op
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy import linalg
+
+from mne.preprocessing import ICA
+from mne.preprocessing import create_eog_epochs
+
+import mne
+from mne import io
+from mne.time_frequency import tfr_morlet, psd_multitaper
+from mne.connectivity import spectral_connectivity       #ICAなど必要なもののimport
+import csv
+
+data_path = '/Users/emi/Desktop/media_TBS/mod_tv/'
+cname = 'male'
+sname = '01_tv_mod'
+hname =  '.set'
+fname = data_path + cname + sname + hname  #file nameを作る、という意味
+fname   
+
+mon = mne.channels.read_montage(kind = 'standard_1020') 
+
+#01
+fname01 = data_path + cname + sname + hname
+
+events01 = mne.io.read_events_eeglab('/Users/emi/Desktop/media_TBS/mod_tv/male01_tv_mod.set')
+aw01 = mne.io.read_epochs_eeglab(fname01,
+                               montage=mon,
+                               eog=('EOG1', 'EOG2'),
+                               events=events01,
+                               event_id = {'TV1':1, 'TV2':2, 'TV3':3, 'TV4':4, 'TV5':5, 'TV6':6, 'TV7':7, 'TV8':8, 'TV9':9, 'TV10':10, 'TV11':11, 'TV12':12, 'TV13':13, 'TV14':14, 'TV15':15, 'TV16':16, 'TV17':17, 'TV18':18, 'TV19':19, 'TV20':20, 'TV21':21,'TV22':22, 'TV23':23, 'TV24':24, 'TV25':25})
+
+aw01.set_channel_types({'EOG1': 'eog', 'EOG2': 'eog'}) # Set Channel Type(それぞれを区別、名前をつける)
+aw01.set_eeg_reference('average',projection=True)
+
+picks01 = mne.pick_types(aw01.info, meg=False, eeg=True, eog=False, stim=False)  #読み込むチャンネルを設定
+
+aw = mne.concatenate_epochs([aw01])
+
+fig = aw.plot_psd_topomap(ch_type='eeg', normalize=True) #normalizeで決まった周波数帯で出てくる、topomapが顔の図
