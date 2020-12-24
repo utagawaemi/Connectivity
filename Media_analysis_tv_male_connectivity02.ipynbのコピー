@@ -1,0 +1,1143 @@
+{
+ "cells": [
+  {
+   "cell_type": "code",
+   "execution_count": 1,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "%matplotlib inline\n",
+    "\n",
+    "import os.path as op\n",
+    "import numpy as np\n",
+    "import matplotlib.pyplot as plt\n",
+    "from scipy import linalg\n",
+    "\n",
+    "import mne\n",
+    "from mne.time_frequency import tfr_morlet, psd_multitaper\n",
+    "from mne.connectivity import spectral_connectivity\n",
+    "\n",
+    "import csv"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 16,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "IDs = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']\n",
+    "\n",
+    "cname = 'male'\n",
+    "data_path = '/Users/emi/Desktop/media_TBS/media2/adj_tv/'\n",
+    "save_path = '/Users/emi/Desktop/media_TBS/media2/'"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 31,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [],
+   "source": [
+    "for i in range(len(IDs)):  \n",
+    "\n",
+    "    sname = IDs[i]\n",
+    "    fname = data_path + cname + sname + '_tv_adj.set'\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 32,
+   "metadata": {
+    "collapsed": false,
+    "scrolled": true
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Extracting parameters from /Users/emi/Desktop/media_TBS/media2/adj_tv/male12_tv_adj.set...\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "<ipython-input-32-12ff945badfe>:3: RuntimeWarning: At least one epoch has multiple events. Only the latency of the first event will be retained.\n",
+      "  eog=('EOG1', 'EOG2'))\n",
+      "<ipython-input-32-12ff945badfe>:3: RuntimeWarning: The following EEG sensors did not have a position specified in the selected montage: [u'EOG1', u'EOG2']. Their position has been left untouched.\n",
+      "  eog=('EOG1', 'EOG2'))\n"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "25 matching events found\n",
+      "No baseline correction applied\n",
+      "Not setting metadata\n",
+      "0 projection items activated\n",
+      "Ready.\n",
+      "Adding average EEG reference projection.\n",
+      "1 projection items deactivated\n",
+      "Average reference projection was added, but has not been applied yet. Use the apply_proj method to apply it.\n"
+     ]
+    },
+    {
+     "data": {
+      "text/plain": [
+       "<EpochsEEGLAB  |   25 events (all good), 0 - 59.999 sec, baseline off, ~343.4 MB, data loaded,\n",
+       " u'TV': 14\n",
+       " 'TV/REST': 1\n",
+       " 'TV/REST/ANS': 2\n",
+       " 'TV/TV': 8>"
+      ]
+     },
+     "execution_count": 32,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "mon = mne.channels.read_montage(kind = 'standard_1020') \n",
+    "aw = mne.io.read_epochs_eeglab(fname,montage=mon,\n",
+    "                                  eog=('EOG1', 'EOG2'))\n",
+    "aw.set_channel_types({'EOG1': 'eog', 'EOG2': 'eog'}) # Set Channel Type(それぞれを区別、名前をつける)\n",
+    "aw.set_eeg_reference('average',projection=True)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 26,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "<EpochsEEGLAB  |   25 events (all good), 0 - 59.999 sec, baseline off, ~343.4 MB, data loaded,\n",
+      " u'TV': 14\n",
+      " 'TV/REST': 1\n",
+      " 'TV/REST/ANS': 2\n",
+      " 'TV/TV': 8>\n",
+      "<Info | 17 non-empty fields\n",
+      "    bads : list | 0 items\n",
+      "    ch_names : list | Fp1, Fz, F3, F7, EOG1, FC5, FC1, C3, T7, ...\n",
+      "    chs : list | 30 items (EEG: 28, EOG: 2)\n",
+      "    comps : list | 0 items\n",
+      "    custom_ref_applied : bool | False\n",
+      "    dev_head_t : Transform | 3 items\n",
+      "    dig : list | 31 items\n",
+      "    events : list | 0 items\n",
+      "    highpass : float | 0.0 Hz\n",
+      "    hpi_meas : list | 0 items\n",
+      "    hpi_results : list | 0 items\n",
+      "    lowpass : float | 500.0 Hz\n",
+      "    meas_date : NoneType | unspecified\n",
+      "    nchan : int | 30\n",
+      "    proc_history : list | 0 items\n",
+      "    projs : list | Average EEG reference: off\n",
+      "    sfreq : float | 1000.0 Hz\n",
+      "    acq_pars : NoneType\n",
+      "    acq_stim : NoneType\n",
+      "    ctf_head_t : NoneType\n",
+      "    description : NoneType\n",
+      "    dev_ctf_t : NoneType\n",
+      "    experimenter : NoneType\n",
+      "    file_id : NoneType\n",
+      "    gantry_angle : NoneType\n",
+      "    hpi_subsystem : NoneType\n",
+      "    kit_system_id : NoneType\n",
+      "    line_freq : NoneType\n",
+      "    meas_id : NoneType\n",
+      "    proj_id : NoneType\n",
+      "    proj_name : NoneType\n",
+      "    subject_info : NoneType\n",
+      "    xplotter_layout : NoneType\n",
+      ">\n",
+      "[u'Fp1', u'Fz', u'F3', u'F7', u'EOG1', u'FC5', u'FC1', u'C3', u'T7', u'CP5', u'CP1', u'Pz', u'P3', u'P7', u'O1', u'Oz', u'O2', u'P4', u'P8', u'CP6', u'CP2', u'Cz', u'C4', u'T8', u'EOG2', u'FC6', u'FC2', u'F4', u'F8', u'Fp2']\n"
+     ]
+    }
+   ],
+   "source": [
+    "print(aw)\n",
+    "print(aw.info) \n",
+    "print(aw.ch_names)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 35,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [],
+   "source": [
+    "for i in range(len(IDs)):  \n",
+    "\n",
+    "    sname = IDs[i]\n",
+    "    fname = data_path + cname +sname + '_tv_adj.set'"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 37,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "picks = mne.pick_types(aw.info, meg=False, eeg=True, eog=False, stim=False)  #読み込むチャンネルを設定"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 48,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [],
+   "source": [
+    "aw_S1 = aw['TV']\n",
+    "picks = mne.pick_types(aw.info, eeg=True, stim=False)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 52,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [],
+   "source": [
+    "#### theta波 4-7Hz : Baseline\n",
+    "fmin, fmax = 4., 7.\n",
+    "sfreq = aw_S1.info['sfreq'] "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 75,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Connectivity computation...\n",
+      "only using indices for lower-triangular matrix\n",
+      "    computing connectivity for 435 connections\n",
+      "    using t=0.300s..0.500s for estimation (201 points)\n",
+      "    frequencies: 5.0Hz..5.0Hz (1 points)\n",
+      "    connectivity scores will be averaged for each band\n",
+      "    Using multitaper spectrum estimation with 7 DPSS windows\n",
+      "    the following metrics will be computed: Debiased WPLI Square\n",
+      "    computing connectivity for epoch 1\n",
+      "    computing connectivity for epoch 2\n",
+      "    computing connectivity for epoch 3\n",
+      "    computing connectivity for epoch 4\n",
+      "    computing connectivity for epoch 5\n",
+      "    computing connectivity for epoch 6\n",
+      "    computing connectivity for epoch 7\n",
+      "    computing connectivity for epoch 8\n",
+      "    computing connectivity for epoch 9\n",
+      "    computing connectivity for epoch 10\n",
+      "    computing connectivity for epoch 11\n",
+      "    computing connectivity for epoch 12\n",
+      "    computing connectivity for epoch 13\n",
+      "    computing connectivity for epoch 14\n",
+      "    computing connectivity for epoch 15\n",
+      "    computing connectivity for epoch 16\n",
+      "    computing connectivity for epoch 17\n",
+      "    computing connectivity for epoch 18\n",
+      "    computing connectivity for epoch 19\n",
+      "    computing connectivity for epoch 20\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "<ipython-input-75-d2a444a96c30>:5: RuntimeWarning: fmin=4.000 Hz corresponds to 0.804 < 5 cycles based on the epoch length 0.201 sec, need at least 1.250 sec epochs or fmin=24.876. Spectrum estimate will be unreliable.\n",
+      "  faverage=True, tmin=tmin, tmax=tmax, mt_adaptive=False, n_jobs=1)\n"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "    computing connectivity for epoch 21\n",
+      "    computing connectivity for epoch 22\n",
+      "    computing connectivity for epoch 23\n",
+      "    computing connectivity for epoch 24\n",
+      "    computing connectivity for epoch 25\n",
+      "    assembling connectivity matrix (filling the upper triangular region of the matrix)\n",
+      "[Connectivity computation done]\n"
+     ]
+    }
+   ],
+   "source": [
+    "    tmin = 0.3  # exclude the baseline period\n",
+    "    tmax = 0.5\n",
+    "    con, freqs, times, n_epochs, n_tapers = spectral_connectivity(\n",
+    "         aw_S1, method='wpli2_debiased', mode='multitaper', sfreq=sfreq, fmin=fmin, fmax=fmax,\n",
+    "        faverage=True, tmin=tmin, tmax=tmax, mt_adaptive=False, n_jobs=1)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 76,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [],
+   "source": [
+    "fname_souce = save_path + cname + sname + '_tv_adj_Nbas_theta000-con.csv'\n",
+    "with open(fname_souce, 'w') as f:\n",
+    "        writer = csv.writer(f, lineterminator='\\n') # 改行コード（\\n）を指定しておく\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 77,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Connectivity computation...\n",
+      "only using indices for lower-triangular matrix\n",
+      "    computing connectivity for 435 connections\n",
+      "    using t=0.500s..0.700s for estimation (201 points)\n",
+      "    frequencies: 5.0Hz..5.0Hz (1 points)\n",
+      "    connectivity scores will be averaged for each band\n",
+      "    Using multitaper spectrum estimation with 7 DPSS windows\n",
+      "    the following metrics will be computed: Debiased WPLI Square\n",
+      "    computing connectivity for epoch 1\n",
+      "    computing connectivity for epoch 2\n",
+      "    computing connectivity for epoch 3\n",
+      "    computing connectivity for epoch 4\n",
+      "    computing connectivity for epoch 5\n",
+      "    computing connectivity for epoch 6\n",
+      "    computing connectivity for epoch 7\n",
+      "    computing connectivity for epoch 8\n",
+      "    computing connectivity for epoch 9\n",
+      "    computing connectivity for epoch 10\n",
+      "    computing connectivity for epoch 11\n",
+      "    computing connectivity for epoch 12\n",
+      "    computing connectivity for epoch 13\n",
+      "    computing connectivity for epoch 14\n",
+      "    computing connectivity for epoch 15\n",
+      "    computing connectivity for epoch 16\n",
+      "    computing connectivity for epoch 17\n",
+      "    computing connectivity for epoch 18\n",
+      "    computing connectivity for epoch 19\n",
+      "    computing connectivity for epoch 20\n",
+      "    computing connectivity for epoch 21\n",
+      "    computing connectivity for epoch 22\n",
+      "    computing connectivity for epoch 23\n",
+      "    computing connectivity for epoch 24\n",
+      "    computing connectivity for epoch 25\n",
+      "    assembling connectivity matrix (filling the upper triangular region of the matrix)\n",
+      "[Connectivity computation done]\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "<ipython-input-77-7dca46b5a7dd>:5: RuntimeWarning: fmin=4.000 Hz corresponds to 0.804 < 5 cycles based on the epoch length 0.201 sec, need at least 1.250 sec epochs or fmin=24.876. Spectrum estimate will be unreliable.\n",
+      "  faverage=True, tmin=tmin, tmax=tmax, mt_adaptive=False, n_jobs=1)\n"
+     ]
+    }
+   ],
+   "source": [
+    "    tmin = 0.5  # exclude the baseline period\n",
+    "    tmax = 0.7\n",
+    "    con, freqs, times, n_epochs, n_tapers = spectral_connectivity(\n",
+    "        aw_S1, method='wpli2_debiased', mode='multitaper', sfreq=sfreq, fmin=fmin, fmax=fmax,\n",
+    "        faverage=True, tmin=tmin, tmax=tmax, mt_adaptive=False, n_jobs=1)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 78,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "fname_souce = save_path + cname + sname + '_tv_adj_S1_theta000-con.csv'\n",
+    "with open(fname_souce, 'w') as f:\n",
+    "        writer = csv.writer(f, lineterminator='\\n') # 改行コード（\\n）を指定しておく"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 79,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Connectivity computation...\n",
+      "only using indices for lower-triangular matrix\n",
+      "    computing connectivity for 435 connections\n",
+      "    using t=0.000s..0.600s for estimation (601 points)\n",
+      "    frequencies: 5.0Hz..6.7Hz (2 points)\n",
+      "    connectivity scores will be averaged for each band\n",
+      "    Using multitaper spectrum estimation with 7 DPSS windows\n",
+      "    the following metrics will be computed: Debiased WPLI Square\n",
+      "    computing connectivity for epoch 1\n",
+      "    computing connectivity for epoch 2\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "<ipython-input-79-8b056b9e3a51>:5: RuntimeWarning: fmin=4.000 Hz corresponds to 2.404 < 5 cycles based on the epoch length 0.601 sec, need at least 1.250 sec epochs or fmin=8.319. Spectrum estimate will be unreliable.\n",
+      "  faverage=True, tmin=tmin, tmax=tmax, mt_adaptive=False, n_jobs=1)\n"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "    computing connectivity for epoch 3\n",
+      "    computing connectivity for epoch 4\n",
+      "    computing connectivity for epoch 5\n",
+      "    computing connectivity for epoch 6\n",
+      "    computing connectivity for epoch 7\n",
+      "    computing connectivity for epoch 8\n",
+      "    computing connectivity for epoch 9\n",
+      "    computing connectivity for epoch 10\n",
+      "    computing connectivity for epoch 11\n",
+      "    computing connectivity for epoch 12\n",
+      "    computing connectivity for epoch 13\n",
+      "    computing connectivity for epoch 14\n",
+      "    computing connectivity for epoch 15\n",
+      "    computing connectivity for epoch 16\n",
+      "    computing connectivity for epoch 17\n",
+      "    computing connectivity for epoch 18\n",
+      "    computing connectivity for epoch 19\n",
+      "    computing connectivity for epoch 20\n",
+      "    computing connectivity for epoch 21\n",
+      "    computing connectivity for epoch 22\n",
+      "    computing connectivity for epoch 23\n",
+      "    computing connectivity for epoch 24\n",
+      "    computing connectivity for epoch 25\n",
+      "    assembling connectivity matrix (filling the upper triangular region of the matrix)\n",
+      "[Connectivity computation done]\n"
+     ]
+    }
+   ],
+   "source": [
+    "    tmin = 0.0  # exclude the baseline period\n",
+    "    tmax = 0.6\n",
+    "    con, freqs, times, n_epochs, n_tapers = spectral_connectivity(\n",
+    "        aw_S1, method='wpli2_debiased', mode='multitaper', sfreq=sfreq, fmin=fmin, fmax=fmax,\n",
+    "        faverage=True, tmin=tmin, tmax=tmax, mt_adaptive=False, n_jobs=1)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 80,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [],
+   "source": [
+    "fname_souce = save_path + cname + sname + '_tv_adj_S1_theta200-con.csv'\n",
+    "with open(fname_souce, 'w') as f:\n",
+    "        writer = csv.writer(f, lineterminator='\\n') # 改行コード（\\n）を指定しておく"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 83,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Connectivity computation...\n",
+      "only using indices for lower-triangular matrix\n",
+      "    computing connectivity for 435 connections\n",
+      "    using t=0.900s..1.100s for estimation (201 points)\n",
+      "    frequencies: 5.0Hz..5.0Hz (1 points)\n",
+      "    connectivity scores will be averaged for each band\n",
+      "    Using multitaper spectrum estimation with 7 DPSS windows\n",
+      "    the following metrics will be computed: Debiased WPLI Square\n",
+      "    computing connectivity for epoch 1\n",
+      "    computing connectivity for epoch 2\n",
+      "    computing connectivity for epoch 3\n",
+      "    computing connectivity for epoch 4\n",
+      "    computing connectivity for epoch 5\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "<ipython-input-83-07eef01f11e7>:5: RuntimeWarning: fmin=4.000 Hz corresponds to 0.804 < 5 cycles based on the epoch length 0.201 sec, need at least 1.250 sec epochs or fmin=24.876. Spectrum estimate will be unreliable.\n",
+      "  faverage=True, tmin=tmin, tmax=tmax, mt_adaptive=False, n_jobs=1)\n"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "    computing connectivity for epoch 6\n",
+      "    computing connectivity for epoch 7\n",
+      "    computing connectivity for epoch 8\n",
+      "    computing connectivity for epoch 9\n",
+      "    computing connectivity for epoch 10\n",
+      "    computing connectivity for epoch 11\n",
+      "    computing connectivity for epoch 12\n",
+      "    computing connectivity for epoch 13\n",
+      "    computing connectivity for epoch 14\n",
+      "    computing connectivity for epoch 15\n",
+      "    computing connectivity for epoch 16\n",
+      "    computing connectivity for epoch 17\n",
+      "    computing connectivity for epoch 18\n",
+      "    computing connectivity for epoch 19\n",
+      "    computing connectivity for epoch 20\n",
+      "    computing connectivity for epoch 21\n",
+      "    computing connectivity for epoch 22\n",
+      "    computing connectivity for epoch 23\n",
+      "    computing connectivity for epoch 24\n",
+      "    computing connectivity for epoch 25\n",
+      "    assembling connectivity matrix (filling the upper triangular region of the matrix)\n",
+      "[Connectivity computation done]\n"
+     ]
+    }
+   ],
+   "source": [
+    "    tmin = 0.9  # exclude the baseline period\n",
+    "    tmax = 1.1\n",
+    "    con, freqs, times, n_epochs, n_tapers = spectral_connectivity(\n",
+    "        aw_S1, method='wpli2_debiased', mode='multitaper', sfreq=sfreq, fmin=fmin, fmax=fmax,\n",
+    "        faverage=True, tmin=tmin, tmax=tmax, mt_adaptive=False, n_jobs=1)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 86,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [],
+   "source": [
+    "   fname_souce = save_path + sname + cname + '_tv_adj_S1_theta400-con.csv'\n",
+    "with open(fname_souce, 'w') as f:\n",
+    "        writer = csv.writer(f, lineterminator='\\n') # 改行コード（\\n）を指定しておく"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 88,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Connectivity computation...\n",
+      "only using indices for lower-triangular matrix\n",
+      "    computing connectivity for 435 connections\n",
+      "    using t=1.100s..1.300s for estimation (201 points)\n",
+      "    frequencies: 5.0Hz..5.0Hz (1 points)\n",
+      "    connectivity scores will be averaged for each band\n",
+      "    Using multitaper spectrum estimation with 7 DPSS windows\n",
+      "    the following metrics will be computed: Debiased WPLI Square\n",
+      "    computing connectivity for epoch 1\n",
+      "    computing connectivity for epoch 2\n",
+      "    computing connectivity for epoch 3\n",
+      "    computing connectivity for epoch 4\n",
+      "    computing connectivity for epoch 5\n",
+      "    computing connectivity for epoch 6\n",
+      "    computing connectivity for epoch 7\n",
+      "    computing connectivity for epoch 8\n",
+      "    computing connectivity for epoch 9\n",
+      "    computing connectivity for epoch 10\n",
+      "    computing connectivity for epoch 11\n",
+      "    computing connectivity for epoch 12\n",
+      "    computing connectivity for epoch 13\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "<ipython-input-88-2ed3ab7f9049>:5: RuntimeWarning: fmin=4.000 Hz corresponds to 0.804 < 5 cycles based on the epoch length 0.201 sec, need at least 1.250 sec epochs or fmin=24.876. Spectrum estimate will be unreliable.\n",
+      "  faverage=True, tmin=tmin, tmax=tmax, mt_adaptive=False, n_jobs=1)\n"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "    computing connectivity for epoch 14\n",
+      "    computing connectivity for epoch 15\n",
+      "    computing connectivity for epoch 16\n",
+      "    computing connectivity for epoch 17\n",
+      "    computing connectivity for epoch 18\n",
+      "    computing connectivity for epoch 19\n",
+      "    computing connectivity for epoch 20\n",
+      "    computing connectivity for epoch 21\n",
+      "    computing connectivity for epoch 22\n",
+      "    computing connectivity for epoch 23\n",
+      "    computing connectivity for epoch 24\n",
+      "    computing connectivity for epoch 25\n",
+      "    assembling connectivity matrix (filling the upper triangular region of the matrix)\n",
+      "[Connectivity computation done]\n"
+     ]
+    }
+   ],
+   "source": [
+    "    tmin = 1.1  # exclude the baseline period\n",
+    "    tmax = 1.3\n",
+    "    con, freqs, times, n_epochs, n_tapers = spectral_connectivity(\n",
+    "        aw_S1, method='wpli2_debiased', mode='multitaper', sfreq=sfreq, fmin=fmin, fmax=fmax,\n",
+    "        faverage=True, tmin=tmin, tmax=tmax, mt_adaptive=False, n_jobs=1)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 90,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "   fname_souce = save_path + sname + cname + '_tv_adj_S1_theta600-con.csv'\n",
+    "with open(fname_souce, 'w') as f:\n",
+    "        writer = csv.writer(f, lineterminator='\\n') # 改行コード（\\n）を指定しておく"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 91,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Connectivity computation...\n",
+      "only using indices for lower-triangular matrix\n",
+      "    computing connectivity for 435 connections\n",
+      "    using t=1.300s..1.500s for estimation (201 points)\n",
+      "    frequencies: 5.0Hz..5.0Hz (1 points)\n",
+      "    connectivity scores will be averaged for each band\n",
+      "    Using multitaper spectrum estimation with 7 DPSS windows\n",
+      "    the following metrics will be computed: Debiased WPLI Square\n",
+      "    computing connectivity for epoch 1\n",
+      "    computing connectivity for epoch 2\n",
+      "    computing connectivity for epoch 3\n",
+      "    computing connectivity for epoch 4\n",
+      "    computing connectivity for epoch 5\n",
+      "    computing connectivity for epoch 6\n",
+      "    computing connectivity for epoch 7\n",
+      "    computing connectivity for epoch 8\n",
+      "    computing connectivity for epoch 9\n",
+      "    computing connectivity for epoch 10\n",
+      "    computing connectivity for epoch 11\n",
+      "    computing connectivity for epoch 12\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "<ipython-input-91-edcc4092f214>:5: RuntimeWarning: fmin=4.000 Hz corresponds to 0.804 < 5 cycles based on the epoch length 0.201 sec, need at least 1.250 sec epochs or fmin=24.876. Spectrum estimate will be unreliable.\n",
+      "  faverage=True, tmin=tmin, tmax=tmax, mt_adaptive=False, n_jobs=1)\n"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "    computing connectivity for epoch 13\n",
+      "    computing connectivity for epoch 14\n",
+      "    computing connectivity for epoch 15\n",
+      "    computing connectivity for epoch 16\n",
+      "    computing connectivity for epoch 17\n",
+      "    computing connectivity for epoch 18\n",
+      "    computing connectivity for epoch 19\n",
+      "    computing connectivity for epoch 20\n",
+      "    computing connectivity for epoch 21\n",
+      "    computing connectivity for epoch 22\n",
+      "    computing connectivity for epoch 23\n",
+      "    computing connectivity for epoch 24\n",
+      "    computing connectivity for epoch 25\n",
+      "    assembling connectivity matrix (filling the upper triangular region of the matrix)\n",
+      "[Connectivity computation done]\n"
+     ]
+    }
+   ],
+   "source": [
+    "    tmin = 1.3  # exclude the baseline period\n",
+    "    tmax = 1.5\n",
+    "    con, freqs, times, n_epochs, n_tapers = spectral_connectivity(\n",
+    "        aw_S1, method='wpli2_debiased', mode='multitaper', sfreq=sfreq, fmin=fmin, fmax=fmax,\n",
+    "        faverage=True, tmin=tmin, tmax=tmax, mt_adaptive=False, n_jobs=1)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 92,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "   fname_souce = save_path + sname + cname + '_tv_adj_S1_theta800-con.csv'\n",
+    "with open(fname_souce, 'w') as f:\n",
+    "        writer = csv.writer(f, lineterminator='\\n') # 改行コード（\\n）を指定しておく"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 95,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [],
+   "source": [
+    "  # ### alpha波 4-7Hz : Baseline\n",
+    "    \n",
+    "fmin, fmax = 8., 13.\n",
+    "sfreq = aw_S1.info['sfreq'] "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 99,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Connectivity computation...\n",
+      "only using indices for lower-triangular matrix\n",
+      "    computing connectivity for 435 connections\n",
+      "    using t=0.300s..0.500s for estimation (201 points)\n",
+      "    frequencies: 10.0Hz..10.0Hz (1 points)\n",
+      "    connectivity scores will be averaged for each band\n",
+      "    Using multitaper spectrum estimation with 7 DPSS windows\n",
+      "    the following metrics will be computed: Debiased WPLI Square\n",
+      "    computing connectivity for epoch 1\n",
+      "    computing connectivity for epoch 2\n",
+      "    computing connectivity for epoch 3\n",
+      "    computing connectivity for epoch 4\n",
+      "    computing connectivity for epoch 5\n",
+      "    computing connectivity for epoch 6\n",
+      "    computing connectivity for epoch 7\n",
+      "    computing connectivity for epoch 8\n",
+      "    computing connectivity for epoch 9\n",
+      "    computing connectivity for epoch 10\n",
+      "    computing connectivity for epoch 11\n",
+      "    computing connectivity for epoch 12\n",
+      "    computing connectivity for epoch 13\n",
+      "    computing connectivity for epoch 14\n",
+      "    computing connectivity for epoch 15\n",
+      "    computing connectivity for epoch 16\n",
+      "    computing connectivity for epoch 17\n",
+      "    computing connectivity for epoch 18\n",
+      "    computing connectivity for epoch 19\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "<ipython-input-99-8270a96a9d42>:5: RuntimeWarning: fmin=8.000 Hz corresponds to 1.608 < 5 cycles based on the epoch length 0.201 sec, need at least 0.625 sec epochs or fmin=24.876. Spectrum estimate will be unreliable.\n",
+      "  faverage=True, tmin=tmin, tmax=tmax, mt_adaptive=False, n_jobs=1)\n"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "    computing connectivity for epoch 20\n",
+      "    computing connectivity for epoch 21\n",
+      "    computing connectivity for epoch 22\n",
+      "    computing connectivity for epoch 23\n",
+      "    computing connectivity for epoch 24\n",
+      "    computing connectivity for epoch 25\n",
+      "    assembling connectivity matrix (filling the upper triangular region of the matrix)\n",
+      "[Connectivity computation done]\n"
+     ]
+    }
+   ],
+   "source": [
+    "    tmin = 0.3  # exclude the baseline period\n",
+    "    tmax = 0.5\n",
+    "    con, freqs, times, n_epochs, n_tapers = spectral_connectivity(\n",
+    "        aw_S1, method='wpli2_debiased', mode='multitaper', sfreq=sfreq, fmin=fmin, fmax=fmax,\n",
+    "        faverage=True, tmin=tmin, tmax=tmax, mt_adaptive=False, n_jobs=1)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 101,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "   fname_souce = save_path + sname + cname + '_tv_adj_Nbas_alpha000-con.csv'\n",
+    "with open(fname_souce, 'w') as f:\n",
+    "        writer = csv.writer(f, lineterminator='\\n') # 改行コード（\\n）を指定しておく"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 102,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Connectivity computation...\n",
+      "only using indices for lower-triangular matrix\n",
+      "    computing connectivity for 435 connections\n",
+      "    using t=0.500s..0.700s for estimation (201 points)\n",
+      "    frequencies: 10.0Hz..10.0Hz (1 points)\n",
+      "    connectivity scores will be averaged for each band\n",
+      "    Using multitaper spectrum estimation with 7 DPSS windows\n",
+      "    the following metrics will be computed: Debiased WPLI Square\n",
+      "    computing connectivity for epoch 1\n",
+      "    computing connectivity for epoch 2\n",
+      "    computing connectivity for epoch 3\n",
+      "    computing connectivity for epoch 4\n",
+      "    computing connectivity for epoch 5\n",
+      "    computing connectivity for epoch 6\n",
+      "    computing connectivity for epoch 7\n",
+      "    computing connectivity for epoch 8\n",
+      "    computing connectivity for epoch 9\n",
+      "    computing connectivity for epoch 10\n",
+      "    computing connectivity for epoch 11\n",
+      "    computing connectivity for epoch 12\n",
+      "    computing connectivity for epoch 13\n",
+      "    computing connectivity for epoch 14\n",
+      "    computing connectivity for epoch 15\n",
+      "    computing connectivity for epoch 16\n",
+      "    computing connectivity for epoch 17\n",
+      "    computing connectivity for epoch 18\n",
+      "    computing connectivity for epoch 19\n",
+      "    computing connectivity for epoch 20\n",
+      "    computing connectivity for epoch 21\n",
+      "    computing connectivity for epoch 22\n",
+      "    computing connectivity for epoch 23\n",
+      "    computing connectivity for epoch 24\n",
+      "    computing connectivity for epoch 25\n",
+      "    assembling connectivity matrix (filling the upper triangular region of the matrix)\n",
+      "[Connectivity computation done]\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "<ipython-input-102-7dca46b5a7dd>:5: RuntimeWarning: fmin=8.000 Hz corresponds to 1.608 < 5 cycles based on the epoch length 0.201 sec, need at least 0.625 sec epochs or fmin=24.876. Spectrum estimate will be unreliable.\n",
+      "  faverage=True, tmin=tmin, tmax=tmax, mt_adaptive=False, n_jobs=1)\n"
+     ]
+    }
+   ],
+   "source": [
+    "    tmin = 0.5  # exclude the baseline period\n",
+    "    tmax = 0.7\n",
+    "    con, freqs, times, n_epochs, n_tapers = spectral_connectivity(\n",
+    "        aw_S1, method='wpli2_debiased', mode='multitaper', sfreq=sfreq, fmin=fmin, fmax=fmax,\n",
+    "        faverage=True, tmin=tmin, tmax=tmax, mt_adaptive=False, n_jobs=1)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 103,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "   fname_souce = save_path + sname + cname + '_tv_adj_S1_alpha000-con.csv'\n",
+    "with open(fname_souce, 'w') as f:\n",
+    "        writer = csv.writer(f, lineterminator='\\n') # 改行コード（\\n）を指定しておく"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "    tmin = 0.7  # exclude the baseline period\n",
+    "    tmax = 0.9\n",
+    "    con, freqs, times, n_epochs, n_tapers = spectral_connectivity(\n",
+    "        aw_S1, method='wpli2_debiased', mode='multitaper', sfreq=sfreq, fmin=fmin, fmax=fmax,\n",
+    "        faverage=True, tmin=tmin, tmax=tmax, mt_adaptive=False, n_jobs=1)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 104,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "   fname_souce = save_path + sname + cname + '_tv_adj_S1_alpha200-con.csv'\n",
+    "with open(fname_souce, 'w') as f:\n",
+    "        writer = csv.writer(f, lineterminator='\\n') # 改行コード（\\n）を指定しておく"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 105,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Connectivity computation...\n",
+      "only using indices for lower-triangular matrix\n",
+      "    computing connectivity for 435 connections\n",
+      "    using t=0.900s..1.100s for estimation (201 points)\n",
+      "    frequencies: 10.0Hz..10.0Hz (1 points)\n",
+      "    connectivity scores will be averaged for each band\n",
+      "    Using multitaper spectrum estimation with 7 DPSS windows\n",
+      "    the following metrics will be computed: Debiased WPLI Square\n",
+      "    computing connectivity for epoch 1\n",
+      "    computing connectivity for epoch 2\n",
+      "    computing connectivity for epoch 3\n",
+      "    computing connectivity for epoch 4\n",
+      "    computing connectivity for epoch 5\n",
+      "    computing connectivity for epoch 6\n",
+      "    computing connectivity for epoch 7\n",
+      "    computing connectivity for epoch 8\n",
+      "    computing connectivity for epoch 9\n",
+      "    computing connectivity for epoch 10\n",
+      "    computing connectivity for epoch 11\n",
+      "    computing connectivity for epoch 12\n",
+      "    computing connectivity for epoch 13\n",
+      "    computing connectivity for epoch 14\n",
+      "    computing connectivity for epoch 15\n",
+      "    computing connectivity for epoch 16\n",
+      "    computing connectivity for epoch 17\n",
+      "    computing connectivity for epoch 18\n",
+      "    computing connectivity for epoch 19\n",
+      "    computing connectivity for epoch 20\n",
+      "    computing connectivity for epoch 21\n",
+      "    computing connectivity for epoch 22\n",
+      "    computing connectivity for epoch 23\n",
+      "    computing connectivity for epoch 24\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "<ipython-input-105-07eef01f11e7>:5: RuntimeWarning: fmin=8.000 Hz corresponds to 1.608 < 5 cycles based on the epoch length 0.201 sec, need at least 0.625 sec epochs or fmin=24.876. Spectrum estimate will be unreliable.\n",
+      "  faverage=True, tmin=tmin, tmax=tmax, mt_adaptive=False, n_jobs=1)\n"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "    computing connectivity for epoch 25\n",
+      "    assembling connectivity matrix (filling the upper triangular region of the matrix)\n",
+      "[Connectivity computation done]\n"
+     ]
+    }
+   ],
+   "source": [
+    "    tmin = 0.9  # exclude the baseline period\n",
+    "    tmax = 1.1\n",
+    "    con, freqs, times, n_epochs, n_tapers = spectral_connectivity(\n",
+    "        aw_S1, method='wpli2_debiased', mode='multitaper', sfreq=sfreq, fmin=fmin, fmax=fmax,\n",
+    "        faverage=True, tmin=tmin, tmax=tmax, mt_adaptive=False, n_jobs=1)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 106,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "   fname_souce = save_path + sname + cname + '_tv_adj_S1_alpha600-con.csv'\n",
+    "with open(fname_souce, 'w') as f:\n",
+    "        writer = csv.writer(f, lineterminator='\\n') # 改行コード（\\n）を指定しておく"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 108,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "  # ### alpha波 4-7Hz : Baseline\n",
+    "    \n",
+    "fmin, fmax = 14., 30.\n",
+    "sfreq = aw_S1.info['sfreq'] "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 109,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Connectivity computation...\n",
+      "only using indices for lower-triangular matrix\n",
+      "    computing connectivity for 435 connections\n",
+      "    using t=0.300s..0.500s for estimation (201 points)\n",
+      "    frequencies: 14.9Hz..29.9Hz (4 points)\n",
+      "    connectivity scores will be averaged for each band\n",
+      "    Using multitaper spectrum estimation with 7 DPSS windows\n",
+      "    the following metrics will be computed: Debiased WPLI Square\n",
+      "    computing connectivity for epoch 1\n",
+      "    computing connectivity for epoch 2\n",
+      "    computing connectivity for epoch 3\n",
+      "    computing connectivity for epoch 4\n",
+      "    computing connectivity for epoch 5\n",
+      "    computing connectivity for epoch 6\n",
+      "    computing connectivity for epoch 7\n",
+      "    computing connectivity for epoch 8\n",
+      "    computing connectivity for epoch 9\n",
+      "    computing connectivity for epoch 10\n",
+      "    computing connectivity for epoch 11\n",
+      "    computing connectivity for epoch 12\n",
+      "    computing connectivity for epoch 13\n",
+      "    computing connectivity for epoch 14\n",
+      "    computing connectivity for epoch 15\n",
+      "    computing connectivity for epoch 16\n",
+      "    computing connectivity for epoch 17\n",
+      "    computing connectivity for epoch 18\n",
+      "    computing connectivity for epoch 19\n",
+      "    computing connectivity for epoch 20\n",
+      "    computing connectivity for epoch 21\n",
+      "    computing connectivity for epoch 22\n",
+      "    computing connectivity for epoch 23\n",
+      "    computing connectivity for epoch 24\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "<ipython-input-109-8270a96a9d42>:5: RuntimeWarning: fmin=14.000 Hz corresponds to 2.814 < 5 cycles based on the epoch length 0.201 sec, need at least 0.357 sec epochs or fmin=24.876. Spectrum estimate will be unreliable.\n",
+      "  faverage=True, tmin=tmin, tmax=tmax, mt_adaptive=False, n_jobs=1)\n"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "    computing connectivity for epoch 25\n",
+      "    assembling connectivity matrix (filling the upper triangular region of the matrix)\n",
+      "[Connectivity computation done]\n"
+     ]
+    }
+   ],
+   "source": [
+    "    tmin = 0.3  # exclude the baseline period\n",
+    "    tmax = 0.5\n",
+    "    con, freqs, times, n_epochs, n_tapers = spectral_connectivity(\n",
+    "        aw_S1, method='wpli2_debiased', mode='multitaper', sfreq=sfreq, fmin=fmin, fmax=fmax,\n",
+    "        faverage=True, tmin=tmin, tmax=tmax, mt_adaptive=False, n_jobs=1)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 110,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "   fname_souce = save_path + sname + cname + '_tv_adj_Nbas_beta000-con.csv'\n",
+    "with open(fname_souce, 'w') as f:\n",
+    "        writer = csv.writer(f, lineterminator='\\n') # 改行コード（\\n）を指定しておく"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": []
+  }
+ ],
+ "metadata": {
+  "anaconda-cloud": {},
+  "kernelspec": {
+   "display_name": "Python [default]",
+   "language": "python",
+   "name": "python2"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 2
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython2",
+   "version": "2.7.12"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 1
+}
